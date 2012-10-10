@@ -52,3 +52,5 @@ involved in any particular ZFS pool. We currently make no attempt to
 only follow ZIO operations directed against physical disks, so it's
 routine for the count of ZIO operations to vastly exceeded the count of
 zfs_read() and zfs_write() calls.
+
+(Chris Siebenmann, October 10 2012)
