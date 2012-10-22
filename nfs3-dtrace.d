@@ -316,7 +316,7 @@ END
 	printa("  %-18s for %-9s           %@8d\n", @ziointercount); printf("\n");
 	printa("  %-18s for %-9s   avg ms: %@8d\n", @ziointeravg); printf("\n");
 	printa("%s for ZIO type %s in %s: %@d\n", @ziointerstats);
-	printf("\n  This reports zio_vdev_io_start() or zio_interrupt() calls that took more\n  than 1/4 msec to go from zio_create() to the routine. (Note that it's\n  routine for slow zio_vdev_io_start() to average higher than zio_interrupt().\n");
+	printf("\n  This reports zio_vdev_io_start() or zio_interrupt() calls that took more\n  than 1/4 msec to go from zio_create() to the routine. Note that it's\n  routine for slow zio_vdev_io_start() to average higher than zio_interrupt().\n");
 
 	printf("\nZIO zio_interrupt() to zio_done() time delay:\n");
 	printa("%s for %s in %s: %@d\n", @zdelta2);
