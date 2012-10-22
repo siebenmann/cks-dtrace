@@ -19,6 +19,12 @@
  *     160	0xa0	REPORT_LUNS
  */
 
+/* For CSLab, the first 18 characters of the iSCSI target name are
+ * constant so we omit them. Change this as appropriate for your
+ * environment.
+ */
+inline int TGTNAME_OFFSET = 18;
+
 BEGIN
 {
 	starttime = timestamp;
@@ -49,7 +55,7 @@ sdt::iscsi_cmd_state_machine:event
 
 	/* This is a sleazy hack, but for us the first 18 characters
 	   of the target name are always constant. */
-	this->tgtname = (string) (this->lun->lun_sess->sess_name+18);
+	this->tgtname = (string) (this->lun->lun_sess->sess_name+TGTNAME_OFFSET);
 
 	this->delta = (timestamp - started[arg0])/1000000;
 	/* See uts/common/sys/scsi/impl/commands.h; we want group 1, 2 format.

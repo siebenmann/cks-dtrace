@@ -27,6 +27,12 @@
  * better.
  */
 
+/* For CSLab, the first 18 characters of the iSCSI target name are
+ * constant so we omit them. Change this as appropriate for your
+ * environment.
+ */
+inline int TGTNAME_OFFSET = 18;
+
 BEGIN
 {
         ziotype[0] = "null";
@@ -171,10 +177,13 @@ sdt::iscsi_cmd_state_machine:event
 /(string) arg2 == "E3" && started[arg0]/
 {
 	this->delta = (timestamp - started[arg0])/1000;
-
 	this->icmdp = (iscsi_cmd_t *) arg0;
 	this->lun = this->icmdp->cmd_lun;
-	this->tgtname = (string) this->lun->lun_sess->sess_name;
+
+	/* This is a sleazy hack, but for us the first 18 characters
+	   of the target name are always constant. */
+	this->tgtname = (string) (this->lun->lun_sess->sess_name+TGTNAME_OFFSET);
+
 	this->cmdb = this->icmdp->cmd_un.scsi.pkt->pkt_cdbp[0];
 	this->cdb = this->icmdp->cmd_un.scsi.pkt->pkt_cdbp;
 	this->lba = (uint)this->cdb[2] << 24 | (uint)this->cdb[3] << 16 | (uint)this->cdb[4] << 8 | (uint)this->cdb[5];
