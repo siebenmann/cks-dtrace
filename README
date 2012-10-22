@@ -30,8 +30,7 @@ The current DTrace scripts here:
 - iscsi-trace.d: gathers relatively low-level timing information on
   iSCSI initiator performance. This accumulates not just averages
   (which iostat will sort of tell you) but also distributions and
-  breaks down the numbers in various ways. With sufficient verbosity
-  it can log specifics about long IO operations.
+  breaks down the numbers in various ways.
 
 - nfs3-long.d: report on long NFS v3 read, write, and commit operations.
 

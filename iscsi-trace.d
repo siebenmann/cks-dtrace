@@ -4,14 +4,11 @@
 /*
  * Report on iSCSI initiator IO timings and so on.
  *
- * usage: iscsi-dtrace.d [verbosity [slow-msecs]]
+ * usage: iscsi-dtrace.d [verbosity]
  *
  * verbosity 1 produces per-LUN+target IP statistics as well as some
  * other attempts to track queue depth.
  *
- * verbosity 2 also reports details on long iSCSI IOs. By default it
- * reports on anything that took 500 msec or longer; a second argument
- * (in milliseconds) changes that.
 */
 
 /*
@@ -30,8 +27,6 @@ BEGIN
 	verbose = $1;
 	closedcnt = 0;
 	starttime = timestamp;
-	/* The default delay time is 500 msec */
-	delaytime = $2 > 0 ? $2 * 1000000 : 500 * 1000000;
 }
 
 /*
@@ -121,24 +116,6 @@ sdt::iscsi_cmd_state_machine:event
 	// this->lba = this->lba / (2097152*2);
 	// @lba["lba addresses quantized in 2 GB chunks", this->cmdb] = lquantize(this->lba, 0, 100);
 	*/
-}
-
-sdt::iscsi_cmd_state_machine:event
-/verbose >= 2 && ((iscsi_cmd_t *) arg0)->cmd_type == 1 && (string) arg2 == "E3" && started[arg0] && (timestamp - started[arg0]) > delaytime /
-{
-	this->icmdp = (iscsi_cmd_t *) arg0;
-	this->lun = this->icmdp->cmd_lun;
-	this->tgtname = (string) this->lun->lun_sess->sess_name;
-	this->delta = (timestamp - started[arg0])/1000000;
-	/* See uts/common/sys/scsi/impl/commands.h; we want group 1, 2 format.
-	   also io/scsi/targets/sd.c */
-	this->cmdb = this->icmdp->cmd_un.scsi.pkt->pkt_cdbp[0];
-	this->cdb = this->icmdp->cmd_un.scsi.pkt->pkt_cdbp;
-	this->lba = (uint)this->cdb[2] << 24 | (uint)this->cdb[3] << 16 | (uint)this->cdb[4] << 8 | (uint)this->cdb[5];
-	this->count = (uint)this->cdb[7] << 8 | (uint)this->cdb[8];
-	this->addr =  (u_char *) &this->icmdp->cmd_conn->conn_curr_addr.sin4.sin_addr;
-	printf("LONG ISCSI %p %s/%d @ %d.%d.%d.%d delta %d ms CDDB cmd %2d clen %d slen %d data trans %6d lba %d count %d\n", arg0, this->tgtname, this->lun->lun_num, (uint) this->addr[0], (uint) this->addr[1], (uint) this->addr[2], (uint) this->addr[3], this->delta, this->cmdb, this->icmdp->cmd_un.scsi.cmdlen, this->icmdp->cmd_un.scsi.statuslen, this->icmdp->cmd_un.scsi.data_transferred, this->lba, this->count);
-	/* @slowlba["lba for slow IO with CDDB byte", this->cmdb] = quantize(this->lba); */
 }
 
 sdt::iscsi_cmd_state_machine:event
