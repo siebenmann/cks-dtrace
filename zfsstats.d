@@ -2,6 +2,51 @@
 #pragma D option quiet
 #pragma D option defaultargs
 #pragma D option dynvarsize=64m
+/*
+ * Report on ZFS activity.
+ *
+ * usage: zfsstats.d [verbosity]
+ *
+ * verbosity 1 reports on some additional things.
+ *
+ * Information about what gets reported:
+ *
+ * Total ZFS: zfs_read() and zfs_write() volume, plus how many other ZFS
+ *              VFS operations there were that probably read from or
+ *              write to the filesystem.
+ *		(The script makes some attempt to count zfs_getpage() and
+ *		zfs_putpage() activity, but <cks> is not convinced it's
+ *		accurate. Our NFS v3 server makes little use of either.)
+ *		Note that ZFS reads can hit readahead results and the ARC
+ *		cache and not result in actual ZIO activity.
+ *
+ * Total ZIO: read, write, and how many times pool ZILs were committed.
+ *		Note that you can have ZIL commits that don't write any
+ *		data because the ZIL doesn't have anything uncommitted.
+ *
+ * Pool ZIO: count, pool, how many read & write ops and volume, and how
+ *		IOs divide up among foreground, synchronous high-priority,
+ *		readaheads, asynchronous writebacks, and other background IOs.
+ *
+ * IO multiplication: ZFS writes and reads versus ZIO writes and *foreground*
+ *		ZIO reads. ZFS writes often multiply if you have redundant
+ *		vdevs; mirrors will multiply them by (at least) the mirroring
+ *		count. ZFS reads multiply on cache misses by the ZFS block
+ *		size; you may read 4 KB at the user level, but ZIO always
+ *		fetches full blocks (usually 128 KB).
+ *
+ * ZIL writes: total count, KB used / KB allocated in pool, ZIL commit count.
+ *	The ZIL is allocated in blocks but not all of a block may be used
+ *	for data before the block is committed.
+ *
+ * Active ZIO in pool and Pool TXG count should be obvious. Note that
+ * active ZIO is an instantaneous snapshot of the current state, not a
+ * cumulative count.
+ *
+ * Note that all sizes and IO counts are per-ten-seconds cumulative totals,
+ * *not* per-second numbers. Divide by ten to get a per-second number if you
+ * want it, but it may be misleading.
+ */
 
 BEGIN
 {
@@ -258,10 +303,10 @@ tick-10sec
 
 tick-10sec
 {	
-	printf("\n%Y (10 second totals):\n\n", walltimestamp);
+	printf("\n%Y (10 second totals):\n", walltimestamp);
 	normalize(@zfsrtot, 1024*1024); normalize(@zfswtot, 1024*1024);
 	normalize(@ztread, 1024*1024); normalize(@ztwrite, 1024*1024);
-	printa("Total ZFS: %@5d MB read %@5d MB write   FS ops: %@4d read %@4d write\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops);
+	printa("Total ZFS: %@5d MB read %@5d MB write   +FS ops: %@4d readers %@4d writers\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops);
 	printa("Total ZIO: %@5d MB read %@5d MB write   %@d ZIL commits\n", @ztread, @ztwrite, @zilcommit);
 		printf("\n");
 

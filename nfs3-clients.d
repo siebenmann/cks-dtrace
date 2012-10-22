@@ -7,9 +7,20 @@
  * Give a traffic overview for an NFS fileserver every ten seconds.
  * Specialized to CSLab's environment.
  *
- * usage: nfs3-client.d [verbosity]
+ * usage: nfs3-clients.d [verbosity]
  *
  * verbosity 1 adds some extra activity breakdowns.
+ *
+ * Information on what gets reported:
+ * - writes are broken down into different categories depending on the
+ *   NFS v3 'stable' setting. These are plain writes (no stability
+ *   required), 'write (data sync)' aka DATA_SYNC, and 'write (file
+ *   sync)' aka FILE_SYNC.
+ *
+ * The 'currently outstanding' information is an instantaneous snapshot.
+ * All other information is aggregated over ten seconds. Note that size
+ * are *not* MB/second, they are total MBs; divide by ten to get a per-second
+ * figure.
  */
 
 BEGIN

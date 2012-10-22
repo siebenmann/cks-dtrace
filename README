@@ -36,10 +36,12 @@ The current DTrace scripts here:
 
 - nfs3-clients.d: provides an every-10-seconds report of NFS v3 activity,
   primarily of read and write activity. The activity is broken down in
-  various ways so that we/you can see who is causing it.
+  various ways so that we/you can see who is causing it. See the comments
+  at the start of the script for some information on what it reports.
 
 - zfsstats.d: provides an every-10-seconds report of ZFS activity, again
-  primarily of read and write activity.
+  primarily of read and write activity. See the comments at the start of
+  the script for information on what the reports mean.
 
 - zfstrace.d: provide timing traces of zfs_read()/zfs_write(), ZIO
   operations, and iSCSI operations; every operation is reported with
@@ -66,4 +68,6 @@ only follow ZIO operations directed against physical disks, so it's
 routine for the count of ZIO operations to vastly exceeded the count of
 zfs_read() and zfs_write() calls.
 
-(Chris Siebenmann, October 10 2012)
+BUGS: some of these scripts are terribly named.
+
+(Chris Siebenmann, October 22 2012)
