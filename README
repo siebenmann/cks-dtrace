@@ -11,6 +11,39 @@ work on any later or earlier version. They work for us but as usual
 there are no warranties. I make no claims that they are general; we
 wrote them to find out the information that we needed at the time.
 
+=== Using the scripts
+
+There are four different things you can use these scripts for, depending
+on what you need.
+
+nfs3-clients.d and zfsstats.d provide top-like periodic reports on NFS
+v3 server activity and ZFS activity, suitable for running either when
+there's a load problem or you just want to know generally what sort of
+things are going on. nfs3-clients.d is focused on the sources of client
+activity so you can zero in on where load is coming from. zfsstats.d
+focuses on what pools are active and how.
+
+nfs3-dtrace.d and iscsi-trace.d gather aggregate timing and activity
+information over however long you run them for NFS v3 server and iSCSI
+initiator activity. Their goal is to characterize how your IO looks like
+and how things seem to be performing; what activities are fast or slow,
+and how things break down. These two scripts were developed first and
+are the most primitive and peculiar.
+
+nfs3-long.d and iscsi-long.d provide immediate reports of long operations
+at the NFS v3 server or iSCSI initiator level. You would run these if you
+think (or know) that you have unusually slow operations and want to know
+what they look like and how often they happen.
+
+zfstrace.d reports every ZFS, ZIO, and iSCSI initiator operation, with
+duration and other information. This isn't the kind of thing you read
+directly, live; instead it's the kind of thing you feed to detailed
+analysis that needs full information about each event. For example,
+working out your 99% performance point or graphing the distribution
+of IO times.
+
+=== Script details
+
 The current DTrace scripts here:
 
 - nfs3-dtrace.d: gathers timing information on NFS v3 server performance
@@ -33,6 +66,11 @@ The current DTrace scripts here:
   breaks down the numbers in various ways.
 
 - nfs3-long.d: report on long NFS v3 read, write, and commit operations.
+  We don't report long operations for other sorts of things because right
+  now we don't have problems with those (or at least we don't think we do);
+  reads and writes are the bulk of our IO and the bulk of our problems.
+
+- iscsi-long.d: report on long iSCSI SCSI operations.
 
 - nfs3-clients.d: provides an every-10-seconds report of NFS v3 activity,
   primarily of read and write activity. The activity is broken down in
