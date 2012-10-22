@@ -33,6 +33,20 @@ The current DTrace scripts here:
   breaks down the numbers in various ways. With sufficient verbosity
   it can log specifics about long IO operations.
 
+- nfs3-long.d: report on long NFS v3 read, write, and commit operations.
+
+- nfs3-clients.d: provides an every-10-seconds report of NFS v3 activity,
+  primarily of read and write activity. The activity is broken down in
+  various ways so that we/you can see who is causing it.
+
+- zfsstats.d: provides an every-10-seconds report of ZFS activity, again
+  primarily of read and write activity.
+
+- zfstrace.d: provide timing traces of zfs_read()/zfs_write(), ZIO
+  operations, and iSCSI operations; every operation is reported with
+  the time it took and various other details. The output is cryptic
+  and compact due to volume and speed concerns.
+
 Understanding some of the details of this information requires some
 knowledge of (Open)Solaris kernel internals, but I think that much of it
 will be relatively obvious.
