@@ -277,12 +277,12 @@ END
 	printf("\nRUN TIME: %d seconds\n\n", (timestamp - starttime) / 1000000000);
 	printf("\n== Event counts ==");
 	printf("\nAll NFS v3 ops:\n");
-	printa("  %-15s   %@10d\n", @opcount);
+	printa("  %-16s   %@10d\n", @opcount);
 	printf("\n\nNFS v3 read/write/commit; fast is <1/4 msec, assumed to hit cache:\n");
-	printa("  %-15s   %@10d\n",@count);
+	printa("  %-16s   %@10d\n",@count);
 	printf("\n\nZFS/ZIO counts:\n");
-	printa("  %-15s   %@10d\n", @zcount); printf("\n");
-	printa("  %-15s   %@10d\n", @ziocount);
+	printa("  %-16s   %@10d\n", @zcount); printf("\n");
+	printa("  %-16s   %@10d\n", @ziocount);
 
 	printf("\n\n== Averages and other stats ==\n\n");
 	printa("  %-30s   %@10d %s\n", @avg); printf("\n");
