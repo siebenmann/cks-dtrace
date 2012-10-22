@@ -111,11 +111,6 @@ fbt::zio_create:return
 	args[1]->io_vd && args[1]->io_vd->vdev_ops->vdev_op_leaf /
 {
 	this->pool = (string) args[1]->io_spa->spa_name;
-
-	/* Even if we do not use this timestamp, we need some marker for
-	   'zio_create has incremented the active counter'. Otherwise the
-	   active count will go negative during early startup, as ZIOs
-	   complete that were created before this script started. */
 	ziots[args[1]] = timestamp;
 }
 
