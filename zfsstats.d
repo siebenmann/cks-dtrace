@@ -350,6 +350,14 @@ tick-10sec
 }
 
 /*
+ * Force a blank line at the end of the report.
+ */
+tick-10sec
+{
+	printf("\n");
+}
+
+/*
  * We truncate everything at END so that it isn't printed out one last
  * time (badly).
  */
