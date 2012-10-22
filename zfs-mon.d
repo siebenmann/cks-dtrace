@@ -5,7 +5,7 @@
 /*
  * Report on ZFS activity.
  *
- * usage: zfsstats.d [verbosity]
+ * usage: zfs-mon.d [verbosity]
  *
  * verbosity 1 reports on some additional things.
  *

@@ -16,14 +16,14 @@ wrote them to find out the information that we needed at the time.
 There are four different things you can use these scripts for, depending
 on what you need.
 
-nfs3-clients.d and zfsstats.d provide top-like periodic reports on NFS
+nfs3-mon.d and zfs-mon.d provide top-like periodic reports on NFS
 v3 server activity and ZFS activity, suitable for running either when
 there's a load problem or you just want to know generally what sort of
-things are going on. nfs3-clients.d is focused on the sources of client
-activity so you can zero in on where load is coming from. zfsstats.d
+things are going on. nfs3-mon.d is focused on the sources of client
+activity so you can zero in on where load is coming from. zfs-mon.d
 focuses on what pools are active and how.
 
-nfs3-dtrace.d and iscsi-trace.d gather aggregate timing and activity
+nfs3-stats.d and iscsi-stats.d gather aggregate timing and activity
 information over however long you run them for NFS v3 server and iSCSI
 initiator activity. Their goal is to characterize how your IO looks like
 and how things seem to be performing; what activities are fast or slow,
@@ -46,7 +46,7 @@ of IO times.
 
 The current DTrace scripts here:
 
-- nfs3-dtrace.d: gathers timing information on NFS v3 server performance
+- nfs3-stats.d: gathers timing information on NFS v3 server performance
   and ZFS performance (both high level and low level). This is mostly
   presented as distributions.
 
@@ -60,7 +60,7 @@ The current DTrace scripts here:
     sending disk flushes to the disks and this script ignores them for
     reasons beyond the scope of this README.
 
-- iscsi-trace.d: gathers relatively low-level timing information on
+- iscsi-stats.d: gathers relatively low-level timing information on
   iSCSI initiator performance. This accumulates not just averages
   (which iostat will sort of tell you) but also distributions and
   breaks down the numbers in various ways.
@@ -72,12 +72,12 @@ The current DTrace scripts here:
 
 - iscsi-long.d: report on long iSCSI SCSI operations.
 
-- nfs3-clients.d: provides an every-10-seconds report of NFS v3 activity,
+- nfs3-mon.d: provides an every-10-seconds report of NFS v3 activity,
   primarily of read and write activity. The activity is broken down in
   various ways so that we/you can see who is causing it. See the comments
   at the start of the script for some information on what it reports.
 
-- zfsstats.d: provides an every-10-seconds report of ZFS activity, again
+- zfs-mon.d: provides an every-10-seconds report of ZFS activity, again
   primarily of read and write activity. See the comments at the start of
   the script for information on what the reports mean.
 
@@ -105,7 +105,5 @@ involved in any particular ZFS pool. We currently make no attempt to
 only follow ZIO operations directed against physical disks, so it's
 routine for the count of ZIO operations to vastly exceeded the count of
 zfs_read() and zfs_write() calls.
-
-BUGS: some of these scripts are terribly named.
 
 (Chris Siebenmann, October 22 2012)

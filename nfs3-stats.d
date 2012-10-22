@@ -5,7 +5,7 @@
 /*
  * Report on NFS v3 and ZFS IO latencies and timings.
  *
- * usage: nfs3-dtrace.d [verbosity]
+ * usage: nfs3-stats.d [verbosity]
  *
  * Verbosity 2 prints stack traces that you probably don't care about.
  *

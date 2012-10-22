@@ -7,7 +7,7 @@
  * Give a traffic overview for an NFS fileserver every ten seconds.
  * Specialized to CSLab's environment.
  *
- * usage: nfs3-clients.d [verbosity]
+ * usage: nfs3-mon.d [verbosity]
  *
  * verbosity 1 adds some extra activity breakdowns.
  *

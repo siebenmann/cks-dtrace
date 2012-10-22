@@ -4,7 +4,7 @@
 /*
  * Report on iSCSI initiator IO timings and so on.
  *
- * usage: iscsi-dtrace.d [verbosity]
+ * usage: iscsi-stats.d [verbosity]
  *
  * verbosity 1 produces per-LUN+target IP statistics as well as some
  * other attempts to track queue depth.
