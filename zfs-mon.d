@@ -12,8 +12,8 @@
  * Information about what gets reported:
  *
  * Total ZFS: zfs_read() and zfs_write() volume, plus how many other ZFS
- *              VFS operations there were that probably read from or
- *              write to the filesystem.
+ *              VFS (metadata) operations there were that probably read
+ *		from or write to the filesystem.
  *		(The script makes some attempt to count zfs_getpage() and
  *		zfs_putpage() activity, but <cks> is not convinced it's
  *		accurate. Our NFS v3 server makes little use of either.)
@@ -306,13 +306,13 @@ tick-10sec
 	printf("\n%Y (10 second totals):\n", walltimestamp);
 	normalize(@zfsrtot, 1024*1024); normalize(@zfswtot, 1024*1024);
 	normalize(@ztread, 1024*1024); normalize(@ztwrite, 1024*1024);
-	printa("Total ZFS: %@5d MB read %@5d MB write   +FS ops: %@4d readers %@4d writers\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops);
+	printa("Total ZFS: %@5d MB read %@5d MB write   +FS metaops: %@4d readers %@4d writers\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops);
 	printa("Total ZIO: %@5d MB read %@5d MB write   %@d ZIL commits\n", @ztread, @ztwrite, @zilcommit);
 		printf("\n");
 
 	printf("Pool ZIO:\n");
 	normalize(@zrsize, 1024*1024);	normalize(@zwsize, 1024*1024);
-	printa("%@6d in %16s  reads: %@4d / %@4d MB  writes: %@4d / %@4d MB | %@4d fg %@4d ra %@4d wb %@3d bg\n",
+	printa("%@6d in %16s  reads: %@4d / %@4d MB  writes: %@5d / %@4d MB | %@5d fg %@4d ra %@5d wb %@3d bg\n",
 		@zio, @zread, @zrsize, @zwrite, @zwsize, @ziofg, @ziora, @ziowb, @ziobg);
 	printf("\n");
 
@@ -320,7 +320,7 @@ tick-10sec
 	normalize(@zfsread, 1024*1024); normalize(@zfswrite, 1024*1024);
 	normalize(@zfgrsize, 1024*1024);
 	printf("IO multiplication, zfs_(read|write) vs ZIO (ZIO reads are fg only):\n");
-	printa("  %-16s  writes: %@4d / %@4d MB vs %@4d / %@4d MB  reads: %@4d / %@4d MB vs %@4d / %@4d MB\n",
+	printa("  %-16s  writes: %@5d / %@4d MB vs %@5d / %@4d MB  reads: %@4d / %@4d MB vs %@4d / %@4d MB\n",
 		@zfswc, @zfswrite, @zwrite, @zwsize,
 		@zfsrc, @zfsread, @zfgread, @zfgrsize);
 	printf("\n");
