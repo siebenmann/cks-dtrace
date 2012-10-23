@@ -1,13 +1,16 @@
-#!/usr/sbin/dtrace -s
+#!/usr/sbin/dtrace -Cs
 #pragma D option quiet
 #pragma D option defaultargs
 #pragma D option dynvarsize=64m
 /*
  * Report on ZFS activity.
  *
- * usage: zfs-mon.d [verbosity]
+ * usage: zfs-mon.d [verbosity [pool-metadata]]
  *
- * verbosity 1 reports on some additional things.
+ * verbosity 1 reports basic information about ZFS VFS metadata operations.
+ * verbosity 2 adds reports on active ZIOs and pool TXGs.
+ * pool-metadata 1 adds details on per-pool metadata operations; it implies
+ * verbosity 1 (but you can use 'zfs-mon.d 0 1' if you want to).
  *
  * Information about what gets reported:
  *
@@ -71,14 +74,13 @@ BEGIN
 	zfsmops["zfs_rename"]	= "mv";
 	zfsmops["zfs_mkdir"]	= "mkdir";
 	zfsmops["zfs_rmdir"]	= "rmdir";
-	zfsmops["zfs_symlink"]	= "ln-s";
+	zfsmops["zfs_symlink"]	= "symlink";
 	zfsmops["zfs_lookup"]	= "lookup";
 	zfsmops["zfs_readdir"]	= "readdir";
 	zfsmops["zfs_readlink"]	= "readlink";
 
 	verbose = $1;
-	topn = verbose > 0 ? 5: 3;
-	vnl = verbose ? "\n" : "";
+	metadata = $2;
 }
 
 /*
@@ -199,7 +201,7 @@ fbt::zfs_setattr:return, fbt::zfs_create:return, fbt::zfs_remove:return, fbt::zf
 / args[1] == 0 /
 {
 	@zfswrops = count();
-	@zwrmops[zfsmops[probefunc]] = count();
+	@zwrmops[zfsmops[probefunc] != 0 ? zfsmops[probefunc] : probefunc] = count();
 }
 
 fbt::zfs_lookup:return
@@ -211,9 +213,43 @@ fbt::zfs_readdir:return, fbt::zfs_readlink:return
 / args[1] == 0 /
 {
 	@zfsrdops = count();
-	@zrmops[zfsmops[probefunc]] = count();
+	@zrmops[zfsmops[probefunc] != 0 ? zfsmops[probefunc] : probefunc] = count();
 }
 
+
+fbt::zfs_setattr:entry, fbt::zfs_create:entry, fbt::zfs_remove:entry, fbt::zfs_link:entry, fbt::zfs_rename:entry, fbt::zfs_mkdir:entry, fbt::zfs_rmdir:entry, fbt::zfs_symlink:entry,fbt::zfs_lookup:entry,fbt::zfs_readdir:entry, fbt::zfs_readlink:entry
+{
+	self->zp = (znode_t *) args[0]->v_data;
+	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+}
+
+/*
+ * It's possible to do better than this macro, but it requires CPP magic
+ * and is <cks>'s opinion less clear as a result. See
+ *	http://gcc.gnu.org/onlinedocs/cpp/Traditional-macros.html
+ * for details on how.
+ */
+#define	ZVTR(FUNC, AGGR)	fbt::FUNC:return \
+	/ args[1] == 0 && self->zp / \
+	{AGGR[self->zpool] = count(); @zpoolops[self->zpool] = count(); }
+
+ZVTR(zfs_setattr,  @z_setattr)
+ZVTR(zfs_create,   @z_create)
+ZVTR(zfs_remove,   @z_remove)
+ZVTR(zfs_link,     @z_link)
+ZVTR(zfs_rename,   @z_rename)
+ZVTR(zfs_mkdir,    @z_mkdir)
+ZVTR(zfs_rmdir,    @z_rmdir)
+ZVTR(zfs_symlink,  @z_symlink)
+ZVTR(zfs_lookup,   @z_lookup)
+ZVTR(zfs_readdir,  @z_readdir)
+ZVTR(zfs_readlink, @z_readlink)
+
+fbt::zfs_setattr:return, fbt::zfs_create:return, fbt::zfs_remove:return, fbt::zfs_link:return, fbt::zfs_rename:return, fbt::zfs_mkdir:return, fbt::zfs_rmdir:return, fbt::zfs_symlink:return,fbt::zfs_lookup:return,fbt::zfs_readdir:return, fbt::zfs_readlink:return
+{
+	self->zp = 0;
+	self->zpool = 0;
+}
 
 /*
  * We are only really interested in IO counts et al for IO to leaf devices.
@@ -225,6 +261,7 @@ fbt::zio_create:return
 	this->pool = (string) args[1]->io_spa->spa_name;
 	this->cactive = 1;
 	@zactive[this->pool] = sum(1);
+	@z1active = sum(1);
 
 	/* Even if we do not use this timestamp, we need some marker for
 	   'zio_create has incremented the active counter'. Otherwise the
@@ -236,11 +273,13 @@ fbt::zio_create:return
 / this->cactive && args[1]->io_type == 1 /
 {
 	@zractive[this->pool] = sum(1);
+	@z1ractive = sum(1);
 }
 fbt::zio_create:return
 / this->cactive && args[1]->io_type == 2 /
 {
 	@zwactive[this->pool] = sum(1);
+	@z1wactive = sum(1);
 }
 fbt::zio_create:return
 / this->cactive /
@@ -261,6 +300,7 @@ fbt::zio_done:entry
 	this->pool = (string) args[0]->io_spa->spa_name;
 	@zio[this->pool] = count();
 	@zactive[this->pool] = sum(-1);
+	@z1active = sum(-1);
 
 	ziots[args[0]] = 0;
 }
@@ -300,6 +340,7 @@ fbt::zio_done:entry
 	@zread[this->pool] = count();
 	@zrsize[this->pool] = sum(args[0]->io_size);
 	@zractive[this->pool] = sum(-1);
+	@z1ractive = sum(-1);
 	@ztread = sum(args[0]->io_size);
 }
 
@@ -309,6 +350,7 @@ fbt::zio_done:entry
 	@zwrite[this->pool] = count();
 	@zwsize[this->pool] = sum(args[0]->io_size);
 	@zwactive[this->pool] = sum(-1);
+	@z1wactive = sum(-1);
 	@ztwrite = sum(args[0]->io_size);
 }
 
@@ -329,7 +371,7 @@ tick-10sec
 
 tick-10sec
 {	
-	printf("\n%Y (10 second totals):\n", walltimestamp);
+	printf("\n---- %Y ---- (10 second totals):\n", walltimestamp);
 	normalize(@zfsrtot, 1024*1024); normalize(@zfswtot, 1024*1024);
 	normalize(@ztread, 1024*1024); normalize(@ztwrite, 1024*1024);
 	printa("Total ZFS: %@5d MB read %@5d MB write   +FS metaops: %@3d readers %@3d writers %@4d lookups\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops, @zfslkops);
@@ -342,7 +384,6 @@ tick-10sec
 		@zio, @zread, @zrsize, @zwrite, @zwsize, @ziofg, @ziora, @ziowb, @ziobg);
 	printf("\n");
 
-	
 	normalize(@zfsread, 1024*1024); normalize(@zfswrite, 1024*1024);
 	normalize(@zfgrsize, 1024*1024);
 	printf("IO multiplication, zfs_(read|write) vs ZIO (ZIO reads are fg only):\n");
@@ -362,14 +403,29 @@ tick-10sec
 }
 
 tick-10sec
-/verbose/
+/verbose || metadata/
 {
 	printf("\nMetadata operations:\n");
 	printf(" read: "); printa(" %@d %s", @zrmops); printf("\n");
 	printf(" write:"); printa(" %@d %s", @zwrmops); printf("\n");
+}
+tick-10sec
+/metadata/
+{
+	printa(" %@5d %-16s  %@3d creat %@3d ln %@3d mv %@3d rm %@3d mkdir %@3d rmdir %@3d slink %@3d sattr | %@3d rdlink %@3d rddir | %@4d lookup\n",
+		@zpoolops,
+		@z_create, @z_link, @z_rename, @z_remove, @z_mkdir, @z_rmdir,
+		@z_symlink, @z_setattr,
+		@z_readlink, @z_readdir, @z_lookup);
+}
 
-	printf("\n"); 
-	printf("Active ZIO in pool:\n");
+tick-10sec
+/verbose >= 2/
+{
+	printf("\n");
+	printf("Active ZIO:\n");
+	printa("%@6d  == TOTAL ==       %@5d read / %@3d write\n",
+		@z1active, @z1ractive, @z1wactive);
 	printa("%@6d in %-16s  %@3d read / %@3d write\n", @zactive, @zractive, @zwactive);
 	printf("\n");
 
@@ -411,9 +467,15 @@ tick-10sec, END
 
 	trunc(@zfslkops); trunc(@zfsrdops); trunc(@zfswrops);
 	trunc(@zrmops); trunc(@zwrmops);
+
+	trunc(@zpoolops);
+	trunc(@z_create); trunc(@z_link); trunc(@z_rename); trunc(@z_remove);
+	trunc(@z_mkdir); trunc(@z_rmdir); trunc(@z_setattr); trunc(@z_symlink);
+	trunc(@z_readdir); trunc(@z_readlink); trunc(@z_lookup);
 }
 
 END
 {
 	trunc(@zactive); trunc(@zractive); trunc(@zwactive);
+	trunc(@z1active); trunc(@z1ractive); trunc(@z1wactive);
 }
