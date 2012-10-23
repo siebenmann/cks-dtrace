@@ -13,7 +13,9 @@
  *
  * Total ZFS: zfs_read() and zfs_write() volume, plus how many other ZFS
  *              VFS (metadata) operations there were that probably read
- *		from or write to the filesystem.
+ *		from or write to the filesystem. Lookups are looking up
+ *		things from names (in a directory); there are usually a
+ *		lot and most of them are cached.
  *		(The script makes some attempt to count zfs_getpage() and
  *		zfs_putpage() activity, but <cks> is not convinced it's
  *		accurate. Our NFS v3 server makes little use of either.)
@@ -42,6 +44,8 @@
  * Active ZIO in pool and Pool TXG count should be obvious. Note that
  * active ZIO is an instantaneous snapshot of the current state, not a
  * cumulative count.
+ * Metadata operations is the same data as the ZFS (VFS) metadata
+ * operations, broken down by type.
  *
  * Note that all sizes and IO counts are per-ten-seconds cumulative totals,
  * *not* per-second numbers. Divide by ten to get a per-second number if you
@@ -56,6 +60,21 @@ BEGIN
         ziotype[3] = "free";
         ziotype[4] = "claim";
         ziotype[5] = "ioctl";
+
+	/* It would be nice to get a per-pool metadata breakdown,
+	   but this requires far too much grunt-work.
+	   Well, unless we resort to CPP macros ... */
+	zfsmops["zfs_setattr"]	= "setattr";
+	zfsmops["zfs_create"]	= "create";
+	zfsmops["zfs_remove"]	= "rm";
+	zfsmops["zfs_link"]	= "ln";
+	zfsmops["zfs_rename"]	= "mv";
+	zfsmops["zfs_mkdir"]	= "mkdir";
+	zfsmops["zfs_rmdir"]	= "rmdir";
+	zfsmops["zfs_symlink"]	= "ln-s";
+	zfsmops["zfs_lookup"]	= "lookup";
+	zfsmops["zfs_readdir"]	= "readdir";
+	zfsmops["zfs_readlink"]	= "readlink";
 
 	verbose = $1;
 	topn = verbose > 0 ? 5: 3;
@@ -180,12 +199,19 @@ fbt::zfs_setattr:return, fbt::zfs_create:return, fbt::zfs_remove:return, fbt::zf
 / args[1] == 0 /
 {
 	@zfswrops = count();
+	@zwrmops[zfsmops[probefunc]] = count();
 }
 
-fbt::zfs_lookup:return, fbt::zfs_readdir:return, fbt::zfs_readlink:return
+fbt::zfs_lookup:return
+/ args[1] == 0 /
+{
+	@zfslkops = count();
+}
+fbt::zfs_readdir:return, fbt::zfs_readlink:return
 / args[1] == 0 /
 {
 	@zfsrdops = count();
+	@zrmops[zfsmops[probefunc]] = count();
 }
 
 
@@ -306,7 +332,7 @@ tick-10sec
 	printf("\n%Y (10 second totals):\n", walltimestamp);
 	normalize(@zfsrtot, 1024*1024); normalize(@zfswtot, 1024*1024);
 	normalize(@ztread, 1024*1024); normalize(@ztwrite, 1024*1024);
-	printa("Total ZFS: %@5d MB read %@5d MB write   +FS metaops: %@4d readers %@4d writers\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops);
+	printa("Total ZFS: %@5d MB read %@5d MB write   +FS metaops: %@3d readers %@3d writers %@4d lookups\n", @zfsrtot, @zfswtot, @zfsrdops, @zfswrops, @zfslkops);
 	printa("Total ZIO: %@5d MB read %@5d MB write   %@d ZIL commits\n", @ztread, @ztwrite, @zilcommit);
 		printf("\n");
 
@@ -338,6 +364,10 @@ tick-10sec
 tick-10sec
 /verbose/
 {
+	printf("\nMetadata operations:\n");
+	printf(" read: "); printa(" %@d %s", @zrmops); printf("\n");
+	printf(" write:"); printa(" %@d %s", @zwrmops); printf("\n");
+
 	printf("\n"); 
 	printf("Active ZIO in pool:\n");
 	printa("%@6d in %-16s  %@3d read / %@3d write\n", @zactive, @zractive, @zwactive);
@@ -345,7 +375,10 @@ tick-10sec
 
 	printf("Pool TXG count:\n");
 	printa("%@6d  %s\n", @txg);
-	printf("\n"); printa("no context: %@d\n", @zfswput);
+
+	/* <cks> doesn't expect this to fire on our workload.
+	   It should probably be removed. */
+	printa("\nzfs_putapage() bytes: %@d\n", @zfswput);
 	trunc(@zfswput);
 }
 
@@ -376,7 +409,8 @@ tick-10sec, END
 	trunc(@zfgread); trunc(@zfgrsize);
 	trunc(@zfsrtot); trunc(@zfswtot);
 
-	trunc(@zfsrdops); trunc(@zfswrops);
+	trunc(@zfslkops); trunc(@zfsrdops); trunc(@zfswrops);
+	trunc(@zrmops); trunc(@zwrmops);
 }
 
 END
