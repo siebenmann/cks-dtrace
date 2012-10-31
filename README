@@ -36,11 +36,11 @@ and how things break down. These two scripts were developed first and
 are the most primitive and peculiar.
 
 nfs3-long.d and iscsi-long.d provide immediate reports of long operations
-at the NFS v3 server or iSCSI initiator level. You would run these if you
-think (or know) that you have unusually slow operations and want to know
-what they look like and how often they happen. Right now the NFS stuff is
-focused on reads, writes, and commits; the iSCSI initiator stuff looks at
-all SCSI iSCSI operations.
+at the NFS v3 server or iSCSI initiator level. You would run these if
+you think (or know) that you have unusually slow operations and want to
+know what they look like and how often they happen. Right now the NFS
+stuff is focused on reads, writes, and commits (although it reports on
+most ops); the iSCSI initiator stuff looks at all SCSI iSCSI operations.
 
 zfstrace.d reports every ZFS, ZIO, and iSCSI initiator operation, with
 duration and other information. This isn't the kind of thing you read
