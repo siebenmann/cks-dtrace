@@ -8,8 +8,13 @@ details of that environment at
 
 These scripts are for Solaris 10 update 8 plus some patches and may not
 work on any later or earlier version. They work for us but as usual
-there are no warranties. I make no claims that they are general; we
-wrote them to find out the information that we needed at the time.
+there are no warranties. I make no claims that they are general about
+what they report; we wrote them to find out the information that we
+needed at the time.
+
+Please note that some of these scripts contain local assumptions and
+things that are very specific to our environment here. You definitely
+want to read the start of the scripts before using them blindly.
 
 === Using the scripts
 
@@ -33,7 +38,9 @@ are the most primitive and peculiar.
 nfs3-long.d and iscsi-long.d provide immediate reports of long operations
 at the NFS v3 server or iSCSI initiator level. You would run these if you
 think (or know) that you have unusually slow operations and want to know
-what they look like and how often they happen.
+what they look like and how often they happen. Right now the NFS stuff is
+focused on reads, writes, and commits; the iSCSI initiator stuff looks at
+all SCSI iSCSI operations.
 
 zfstrace.d reports every ZFS, ZIO, and iSCSI initiator operation, with
 duration and other information. This isn't the kind of thing you read
@@ -106,4 +113,4 @@ only follow ZIO operations directed against physical disks, so it's
 routine for the count of ZIO operations to vastly exceeded the count of
 zfs_read() and zfs_write() calls.
 
-(Chris Siebenmann, October 22 2012)
+(Chris Siebenmann, October 31 2012)
