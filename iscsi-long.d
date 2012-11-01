@@ -82,3 +82,9 @@ sdt::iscsi_cmd_state_machine:event
 		this->icmdp->cmd_un.scsi.data_transferred,
 		this->lba, this->count);
 }
+
+sdt::iscsi_cmd_state_machine:event
+/(string) arg2 == "E3" && started[arg0]/
+{
+	started[arg0] = 0;
+}
