@@ -25,6 +25,9 @@
  * Multi-CPU issues and other things may not produce traces in strictly
  * sequential order; use the timestamps if you need to reconstruct this
  * better.
+ *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
  */
 
 /* For CSLab, the first 18 characters of the iSCSI target name are

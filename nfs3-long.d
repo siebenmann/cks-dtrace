@@ -27,6 +27,9 @@
  *
  * ASSUMPTION: all exported filesystems are ZFS filesystems. This is
  * true in our environment.
+ *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
  */
 
 BEGIN

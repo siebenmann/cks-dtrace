@@ -6,6 +6,8 @@
  *
  * usage: iscsi-long.d [slow-msecs]
  *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
 */
 
 /*

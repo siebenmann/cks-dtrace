@@ -12,6 +12,9 @@
  * High-level NFS and ZFS IO is separated into 'fast' IO (takes less than
  * 1/4 msec) and 'slow' IO. The assumption is that fast IO is being
  * satisfied from cache instead of from actual disk IO.
+ *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
  */
 
 dtrace:::BEGIN

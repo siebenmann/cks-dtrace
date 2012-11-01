@@ -53,6 +53,9 @@
  * Note that all sizes and IO counts are per-ten-seconds cumulative totals,
  * *not* per-second numbers. Divide by ten to get a per-second number if you
  * want it, but it may be misleading.
+ *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
  */
 
 BEGIN

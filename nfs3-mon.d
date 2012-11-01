@@ -21,6 +21,9 @@
  * All other information is aggregated over ten seconds. Note that size
  * are *not* MB/second, they are total MBs; divide by ten to get a per-second
  * figure.
+ *
+ * Written by Chris Siebenmann
+ * https://github.com/siebenmann/cks-dtrace/
  */
 
 BEGIN
