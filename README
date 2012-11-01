@@ -108,9 +108,11 @@ attempt to only really track synchronous operations that delay the
 completion of the higher-level IO but is probably not perfect about it.
 
 ZIO operations seem to bubble down (and up) through the layers of vdevs
-involved in any particular ZFS pool. We currently make no attempt to
-only follow ZIO operations directed against physical disks, so it's
-routine for the count of ZIO operations to vastly exceeded the count of
-zfs_read() and zfs_write() calls.
+involved in any particular ZFS pool. We attempt to only follow ZIO
+operations directed against physical disks instead of the intermediate
+vdevs (because this is really the useful level to report ZIOs) but our
+handling of this may not be complete. Also, this has only been tested
+in a setup with mirror vdevs and there may be things I don't know about
+ZIO against raidz vdevs.
 
-(Chris Siebenmann, October 31 2012)
+(Chris Siebenmann, November 1 2012)
