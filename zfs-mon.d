@@ -162,9 +162,14 @@ fbt::zfs_write:return, fbt::zfs_putpage:return
 	@zfswtot = sum(self->zsize);
 }
 
-/* NNGH */
-fbt::zfs_putapage:entry
-{ printf("zfs_putapage\n"); }
+/* 'Production' scripts should not contain debugging printfs I inserted
+   to see if something was ever called in our environment.
+   fbt::zfs_putapage:entry
+   { printf("zfs_putapage\n"); } */
+/*
+ * NOTE: This handling of zfs_putapage() is basically completely untested
+ * because it doesn't seem to fire in our environment.
+ */
 fbt::zfs_putapage:entry
 / self->inputpages && self->zsize == 0 /
 {
@@ -186,6 +191,8 @@ fbt::zfs_putapage:return
 	self->lenp = 0;
 }
 
+/*
+ */
 fbt::zfs_read:return, fbt::zfs_write:return, fbt::zfs_getpage:return, fbt::zfs_putpage:return
 / self->zsize /
 {
