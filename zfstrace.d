@@ -74,7 +74,7 @@ fbt::zfs_getpage:entry
 
 /*
  * [ZR|ZW] <delta> <offset in file> <size> <filesystem> <inode #> <pool> <timestamp> <cpu>
- *    1       2           3            4       5           6        7         8  9
+ *    1       2           3            4       5           6        7         8        9
  *
  * offset and size are in bytes.
  */
@@ -187,6 +187,10 @@ sdt::iscsi_cmd_state_machine:event
 	this->lba = (uint)this->cdb[2] << 24 | (uint)this->cdb[3] << 16 | (uint)this->cdb[4] << 8 | (uint)this->cdb[5];
 	this->count = (uint)this->cdb[7] << 8 | (uint)this->cdb[8];
 
+	/* Generate a printable IPv4 address from a sockaddr_in structure.
+	   This magic is taken from nfsv3fbtrws.d in the DTrace book.
+	   More modern versions of DTrace have convenience functions that
+	   do this for us.	- cks */
 	this->a = (uint8_t *)&this->icmdp->cmd_conn->conn_curr_addr.sin4.sin_addr.S_un.S_addr;
 	this->addr1 = strjoin(lltostr(this->a[0] + 0ULL), strjoin(".",
 			strjoin(lltostr(this->a[1] + 0ULL), ".")));

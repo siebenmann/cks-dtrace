@@ -86,7 +86,10 @@ fbt::rfs3_read:entry, fbt::rfs3_write:entry, fbt::rfs3_commit:entry
 
 	this->socket =
 	    (struct sockaddr_in *)self->req->rq_xprt->xp_xpc.xpc_rtaddr.buf;
-	/* DTrace 1.0: no inet functions, no this->strings */
+	/* Generate a printable IPv4 address from a sockaddr_in structure.
+	   This magic is taken from nfsv3fbtrws.d in the DTrace book.
+	   More modern versions of DTrace have convenience functions that
+	   do this for us.	- cks */
 	this->a = (uint8_t *)&this->socket->sin_addr.S_un.S_addr;
 	this->addr1 = strjoin(lltostr(this->a[0] + 0ULL), strjoin(".",
 	    strjoin(lltostr(this->a[1] + 0ULL), ".")));
