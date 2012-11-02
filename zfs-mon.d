@@ -58,6 +58,15 @@
  * https://github.com/siebenmann/cks-dtrace/
  */
 
+/* SOLARIS VERSION DEPENDENCY:
+ * Go from a znode to the name of the pool it is in.
+ * If you get an error 'os is not a member of struct objset',
+ * try using the commented-out version instead (it drops the
+ * '->os' bit).
+ */
+#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
+/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
+
 BEGIN
 {
         ziotype[0] = "null";
@@ -132,13 +141,13 @@ fbt::txg_quiesce:return
 fbt::zfs_read:entry, fbt::zfs_write:entry
 {
 	self->zp = (znode_t *) args[0]->v_data;
-	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpool = ZNODE_TO_POOLNAME(self->zp);
 	self->zsize = args[1]->uio_resid;
 }
 fbt::zfs_getpage:entry, fbt::zfs_putpage:entry
 {
 	self->zp = (znode_t *) args[0]->v_data;
-	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpool = ZNODE_TO_POOLNAME(self->zp);
 	self->zsize = args[2];
 }
 fbt::zfs_putpage:entry
@@ -174,7 +183,7 @@ fbt::zfs_putapage:entry
 / self->inputpages && self->zsize == 0 /
 {
 	this->zpp = (znode_t *) args[0]->v_data;
-	self->zpoolp = (string) this->zpp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpoolp = ZNODE_TO_POOLNAME(this->zpp);
 	self->lenp = args[3];
 }
 fbt::zfs_putapage:return
@@ -230,7 +239,7 @@ fbt::zfs_readdir:return, fbt::zfs_readlink:return
 fbt::zfs_setattr:entry, fbt::zfs_create:entry, fbt::zfs_remove:entry, fbt::zfs_link:entry, fbt::zfs_rename:entry, fbt::zfs_mkdir:entry, fbt::zfs_rmdir:entry, fbt::zfs_symlink:entry,fbt::zfs_lookup:entry,fbt::zfs_readdir:entry, fbt::zfs_readlink:entry
 {
 	self->zp = (znode_t *) args[0]->v_data;
-	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpool = ZNODE_TO_POOLNAME(self->zp);
 }
 
 /*

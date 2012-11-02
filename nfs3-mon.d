@@ -1,4 +1,4 @@
-#!/usr/sbin/dtrace -s
+#!/usr/sbin/dtrace -Cs
 #pragma D option quiet
 #pragma D option defaultargs
 #pragma D option dynvarsize=64m
@@ -25,6 +25,15 @@
  * Written by Chris Siebenmann
  * https://github.com/siebenmann/cks-dtrace/
  */
+
+/* SOLARIS VERSION DEPENDENCY:
+ * Go from a znode to the name of the pool it is in.
+ * If you get an error 'os is not a member of struct objset',
+ * try using the commented-out version instead (it drops the
+ * '->os' bit).
+ */
+#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
+/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
 
 BEGIN
 {
@@ -115,7 +124,7 @@ fbt::nfs3_fhtovp:return
 	this->fst = self->vp->v_vfsp->vfs_fstype;
 	this->znode = (znode_t *)self->vp->v_data;
 	self->pool = this->fst == ztype ? 
-		stringof(this->znode->z_zfsvfs->z_os->os->os_spa->spa_name) :
+		stringof(ZNODE_TO_POOLNAME(this->znode)) :
 		strjoin("non-ZFS fstype ", stringof(`vfssw[this->fst].vsw_name));
 
 	/* guard against repeated calls to nfs3_fhtovp() just in case. */

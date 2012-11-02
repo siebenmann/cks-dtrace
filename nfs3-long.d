@@ -1,4 +1,4 @@
-#!/usr/sbin/dtrace -s
+#!/usr/sbin/dtrace -Cs
 #pragma D option quiet
 #pragma D option defaultargs
 #pragma D option dynvarsize=64m
@@ -31,6 +31,16 @@
  * Written by Chris Siebenmann
  * https://github.com/siebenmann/cks-dtrace/
  */
+
+/* SOLARIS VERSION DEPENDENCY:
+ * Go from a znode to the name of the pool it is in.
+ * If you get an error 'os is not a member of struct objset',
+ * try using the commented-out version instead (it drops the
+ * '->os' bit).
+ */
+#define	ZNODE_TO_SPA(ZN)		(ZN->z_zfsvfs->z_os->os->os_spa)
+/* #define	ZNODE_TO_SPA(ZN)	(ZN->z_zfsvfs->z_os->os_spa) */
+#define	ZNODE_TO_POOLNAME(ZN)	((string) (ZNODE_TO_SPA(ZN))->spa_name)
 
 BEGIN
 {
@@ -131,8 +141,8 @@ fbt::nfs3_fhtovp:return
 	/* Ugly simplification that assumes all FSes are ZFS fses */
 	self->znode = (znode_t *)self->vp->v_data;
 	self->inum = self->znode->z_id + 0ULL;
-	self->pool = (string) self->znode->z_zfsvfs->z_os->os->os_spa->spa_name;
-	self->itxg = self->znode->z_zfsvfs->z_os->os->os_spa->spa_dsl_pool->dp_tx.tx_open_txg;
+	self->pool = ZNODE_TO_POOLNAME(self->znode);
+	self->itxg = ZNODE_TO_SPA(self->znode)->spa_dsl_pool->dp_tx.tx_open_txg;
 	/* make sure this is always set */
 	pooltxg[self->pool] = self->itxg;
 

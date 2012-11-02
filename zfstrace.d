@@ -1,4 +1,4 @@
-#!/usr/sbin/dtrace -s
+#!/usr/sbin/dtrace -Cs
 #pragma D option quiet
 #pragma D option defaultargs
 #pragma D option dynvarsize=64m
@@ -36,6 +36,15 @@
  */
 inline int TGTNAME_OFFSET = 18;
 
+/* SOLARIS VERSION DEPENDENCY:
+ * Go from a znode to the name of the pool it is in.
+ * If you get an error 'os is not a member of struct objset',
+ * try using the commented-out version instead (it drops the
+ * '->os' bit).
+ */
+#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
+/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
+
 BEGIN
 {
         ziotype[0] = "null";
@@ -56,7 +65,7 @@ fbt::zfs_read:entry, fbt::zfs_write:entry
 	self->fs = (string)args[0]->v_vfsp->vfs_mntpt->rs_string;
 	self->zp = (znode_t *) args[0]->v_data;
 	self->inum = self->zp->z_id + 0ULL;
-	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpool = ZNODE_TO_POOLNAME(self->zp);
 	self->zsize = args[1]->uio_resid;
 	self->zoffset = args[1]->_uio_offset._f;
 	self->ts = timestamp;
@@ -66,7 +75,7 @@ fbt::zfs_getpage:entry
 	self->fs = (string)args[0]->v_vfsp->vfs_mntpt->rs_string;
 	self->zp = (znode_t *) args[0]->v_data;
 	self->inum = self->zp->z_id + 0ULL;
-	self->zpool = (string) self->zp->z_zfsvfs->z_os->os->os_spa->spa_name;
+	self->zpool = ZNODE_TO_POOLNAME(self->zp);
 	self->zsize = args[2];
 	self->zoffset = args[1];
 	self->ts = timestamp;
