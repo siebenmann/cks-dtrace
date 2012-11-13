@@ -277,6 +277,15 @@ fbt::rfs3_*:return
 }
 
 fbt::rfs3_*:return
+/ self->mts > 0 && !self->in_rfs3 /
+{
+	/* NFS op handling needs to clear the pool counts too, even though
+	   we don't currently use them, because the counts are incremented
+	   in the common nfs3_fhtovp handling (that we use). */
+	@poolc[self->pool] = sum(-1);
+}
+
+fbt::rfs3_*:return
 / self->mts > 0 /
 {
 	self->req = 0;
