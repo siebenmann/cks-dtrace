@@ -55,12 +55,12 @@ Suppose that you get an error like:
 	nfs3-mon.d: line 63: probe description fbt::rfs3_read:entry does not match any probes
 
 If you're on a Solaris 10 machine, what's probably going is that you
-haven't exported any filesystems via NFS.  SCSI). Solaris does many
-things through loadable kernel modules, including both NFS serving
-and iSCSI. These modules are loaded on demand, when needed by things
-you're doing, and if the modules aren't loaded any trace points they
-define aren't available (both fbt function tracepoints and any general
-providers).
+haven't exported any filesystems via NFS (or perhaps set up any iSCSI
+stuff). Solaris does many things through loadable kernel modules,
+including both NFS serving and iSCSI. These modules are loaded on
+demand, when needed by things you're doing, and if the modules aren't
+loaded any trace points they define aren't available (both fbt function
+tracepoints and any general providers).
 
 You can see a list of what kernel modules are loaded with modinfo.
 In Solaris 10 update 8, the NFS server module is 'nfssrv (NFS server
@@ -143,4 +143,4 @@ handling of this may not be complete. Also, this has only been tested
 in a setup with mirror vdevs and there may be things I don't know about
 ZIO against raidz vdevs.
 
-(Chris Siebenmann, November 2 2012)
+(Chris Siebenmann, November 23 2012)
