@@ -32,8 +32,8 @@
  * try using the commented-out version instead (it drops the
  * '->os' bit).
  */
-#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
-/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
+/* #define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name) */
+#define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name)
 
 BEGIN
 {
@@ -46,10 +46,12 @@ BEGIN
 	names["128.100.3.43"] = "apps3";
 	names["128.100.3.37"] = "oldapps";
 	names["128.100.3.83"] = "dcssmb-3";
+	names["128.100.3.117"] = "dcsosmb-3";
 	names["128.100.3.84"] = "smb-3";
 	names["128.100.3.30"] = "colony";
 	names["128.100.1.10"] = "settlement";
 	names["128.100.3.218"] = "arsenal";
+	names["128.100.3.35"] = "armoury";
 	names["128.100.3.124"] = "mailswitch";
 
 	names["128.100.3.150"] = "comps0";
@@ -57,6 +59,12 @@ BEGIN
 	names["128.100.3.152"] = "comps2";
 	names["128.100.3.153"] = "comps3";
 	names["128.100.3.154"] = "comps4";
+	names["128.100.3.100"] = "compsbk0";
+	names["128.100.3.102"] = "compsbk1";
+	names["128.100.3.103"] = "compsbk2";
+	names["128.100.3.104"] = "compsbk3";
+	names["128.100.3.105"] = "compsbk4";
+	names["128.100.3.106"] = "compsbk5";
 
 	/* this is the stable_how enum */
 	wtypes[0] = "writes";			/* UNSTABLE */

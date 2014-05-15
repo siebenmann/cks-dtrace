@@ -38,8 +38,8 @@
  * try using the commented-out version instead (it drops the
  * '->os' bit).
  */
-#define	ZNODE_TO_SPA(ZN)		(ZN->z_zfsvfs->z_os->os->os_spa)
-/* #define	ZNODE_TO_SPA(ZN)	(ZN->z_zfsvfs->z_os->os_spa) */
+/* #define	ZNODE_TO_SPA(ZN)		(ZN->z_zfsvfs->z_os->os->os_spa) */
+#define	ZNODE_TO_SPA(ZN)	(ZN->z_zfsvfs->z_os->os_spa)
 #define	ZNODE_TO_POOLNAME(ZN)	((string) (ZNODE_TO_SPA(ZN))->spa_name)
 
 BEGIN
@@ -57,6 +57,7 @@ BEGIN
 	names["128.100.3.30"] = "colony";
 	names["128.100.1.10"] = "settlement";
 	names["128.100.3.218"] = "arsenal";
+	names["128.100.3.35"] = "armoury";
 	names["128.100.3.124"] = "mailswitch";
 
 	names["128.100.3.150"] = "comps0";
@@ -64,6 +65,12 @@ BEGIN
 	names["128.100.3.152"] = "comps2";
 	names["128.100.3.153"] = "comps3";
 	names["128.100.3.154"] = "comps4";
+	names["128.100.3.100"] = "compsbk0";
+	names["128.100.3.102"] = "compsbk1";
+	names["128.100.3.103"] = "compsbk2";
+	names["128.100.3.104"] = "compsbk3";
+	names["128.100.3.105"] = "compsbk4";
+	names["128.100.3.106"] = "compsbk5";
 
 	/* this is the stable_how enum */
 	wtypes[0] = "write";			/* UNSTABLE */
@@ -161,7 +168,7 @@ fbt::txg_quiesce:entry
 }
 
 fbt::rfs3_read:return, fbt::rfs3_write:return, fbt::rfs3_commit:return
-/ self->ts > 0 && (timestamp - self->ts) > delaytime/ 
+/ self->ts > 0 && (timestamp - self->ts) >= delaytime/ 
 {
 	this->delta = (timestamp - self->ts) / 1000000;
 	this->kb = self->count / 1024;
@@ -187,7 +194,7 @@ fbt::rfs3_read:return, fbt::rfs3_write:return, fbt::rfs3_commit:return
    to exclude keys with zeros, or let us retrieve only a specific keyed
    aggregate. */
 fbt::rfs3_read:return, fbt::rfs3_write:return, fbt::rfs3_commit:return
-/ verbose >= 2 && self->ts > 0 && (timestamp - self->ts) > delaytime/ 
+/ verbose >= 2 && self->ts > 0 && (timestamp - self->ts) >= delaytime/ 
 {
 	/* Turns out I don't want a timestamp on this after all */
 	printf("   ACTIVE NFS reqs: ");
@@ -255,7 +262,7 @@ fbt::rfs3_readlink:entry,fbt::rfs3_access:entry,fbt::rfs3_create:entry,fbt::rfs3
 }
 
 fbt::rfs3_*:return
-/ self->mts > 0 && (timestamp - self->mts) > delaytime /
+/ self->mts > 0 && (timestamp - self->mts) >= delaytime /
 {
 	this->delta = (timestamp - self->mts) / 1000000;
 	this->path = strjoin(" file ", self->path);

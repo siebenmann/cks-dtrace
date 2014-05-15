@@ -64,8 +64,8 @@
  * try using the commented-out version instead (it drops the
  * '->os' bit).
  */
-#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
-/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
+/* #define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name) */
+#define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name)
 
 BEGIN
 {
@@ -99,6 +99,7 @@ BEGIN
  * Count ZIL activity
  */
 fbt::zil_lwb_write_start:entry
+/(string) args[0]->zl_dmu_pool->dp_spa->spa_name != "rpool"/
 {
 	this->syncpool = (string) args[0]->zl_dmu_pool->dp_spa->spa_name;
 	@zilsync[this->syncpool] = count();
@@ -112,9 +113,10 @@ fbt::zil_lwb_write_start:entry
  * useful; we'll see.
  */
 fbt::zil_commit:entry
+/(string) args[0]->zl_dmu_pool->dp_spa->spa_name != "rpool"/
 {
-	@zilcommit = count();
 	this->syncpool = (string) args[0]->zl_dmu_pool->dp_spa->spa_name;
+	@zilcommit = count();
 	@zilcommits[this->syncpool] = count();
 }
 
@@ -122,6 +124,7 @@ fbt::zil_commit:entry
  * Count how many TXG commits we have over the time span.
  */
 fbt::txg_quiesce:entry
+/(string) args[0]->dp_spa->spa_name != "rpool"/
 {
 	self->txgpool = (string) args[0]->dp_spa->spa_name;
 	self->txact = 1
@@ -157,14 +160,14 @@ fbt::zfs_putpage:entry
 }
 
 fbt::zfs_read:return, fbt::zfs_getpage:return
-/ args[1] == 0 && self->zsize /
+/ args[1] == 0 && self->zsize && self->zpool != "rpool" /
 {
 	@zfsread[self->zpool] = sum(self->zsize);
 	@zfsrc[self->zpool] = count();
 	@zfsrtot = sum(self->zsize);
 }
 fbt::zfs_write:return, fbt::zfs_putpage:return
-/ args[1] == 0 && self->zsize /
+/ args[1] == 0 && self->zsize && self->zpool != "rpool" /
 {
 	@zfswrite[self->zpool] = sum(self->zsize);
 	@zfswc[self->zpool] = count();
@@ -187,7 +190,7 @@ fbt::zfs_putapage:entry
 	self->lenp = args[3];
 }
 fbt::zfs_putapage:return
-/ args[1] == 0 && self->lenp /
+/ args[1] == 0 && self->lenp && self->zpoolp != "rpool" /
 {
 	this->zsize = *(self->lenp);
 	@zfswrite[self->zpoolp] = sum(this->zsize);
@@ -249,7 +252,7 @@ fbt::zfs_setattr:entry, fbt::zfs_create:entry, fbt::zfs_remove:entry, fbt::zfs_l
  * for details on how.
  */
 #define	ZVTR(FUNC, AGGR)	fbt::FUNC:return \
-	/ args[1] == 0 && self->zp / \
+	/ args[1] == 0 && self->zp && self->zpool != "rpool" / \
 	{AGGR[self->zpool] = count(); @zpoolops[self->zpool] = count(); }
 
 ZVTR(zfs_setattr,  @z_setattr)
@@ -275,7 +278,8 @@ fbt::zfs_setattr:return, fbt::zfs_create:return, fbt::zfs_remove:return, fbt::zf
  */
 fbt::zio_create:return
 / args[1]->io_type && args[1]->io_type != 5 &&
-	args[1]->io_vd && args[1]->io_vd->vdev_ops->vdev_op_leaf /
+	args[1]->io_vd && args[1]->io_vd->vdev_ops->vdev_op_leaf &&
+	(string) args[1]->io_spa->spa_name != "rpool"/
 {
 	this->pool = (string) args[1]->io_spa->spa_name;
 	this->cactive = 1;
@@ -312,7 +316,7 @@ fbt::zio_create:return
 fbt::zio_done:entry
 / args[0]->io_type && args[0]->io_type != 5 &&
 	args[0]->io_vd && args[0]->io_vd->vdev_ops->vdev_op_leaf &&
-	ziots[args[0]] /
+	ziots[args[0]] && (string) args[0]->io_spa->spa_name != "rpool"/
 {
 	this->active = 1;
 	this->op = ziotype[args[0]->io_type];

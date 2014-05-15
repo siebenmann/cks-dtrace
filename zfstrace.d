@@ -42,8 +42,8 @@ inline int TGTNAME_OFFSET = 18;
  * try using the commented-out version instead (it drops the
  * '->os' bit).
  */
-#define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name)
-/* #define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name) */
+/* #define	ZNODE_TO_POOLNAME(ZN)		((string) ZN->z_zfsvfs->z_os->os->os_spa->spa_name) */
+#define	ZNODE_TO_POOLNAME(ZN)	((string) ZN->z_zfsvfs->z_os->os_spa->spa_name)
 
 BEGIN
 {
@@ -88,7 +88,7 @@ fbt::zfs_getpage:entry
  * offset and size are in bytes.
  */
 fbt::zfs_read:return, fbt::zfs_getpage:return
-/ args[1] == 0 && self->zsize /
+/ args[1] == 0 && self->zsize && self->zpool != "rpool"/
 {
 	printf("ZR %d %d %d %s %d %s %d %d\n", (timestamp-self->ts)/1000,
 		self->zoffset, self->zsize, 
@@ -97,7 +97,7 @@ fbt::zfs_read:return, fbt::zfs_getpage:return
 }
 
 fbt::zfs_write:return
-/ args[1] == 0 && self->zsize /
+/ args[1] == 0 && self->zsize && self->zpool != "rpool"/
 {
 	printf("ZW %d %d %d %s %d %s %d %d\n", (timestamp-self->ts)/1000,
 		self->zoffset, self->zsize, 
@@ -120,7 +120,8 @@ fbt::zfs_read:return, fbt::zfs_write:return, fbt::zfs_getpage:return, fbt::zfs_p
  */
 fbt::zio_create:return
 / args[1]->io_type && args[1]->io_type != 5 &&
-	args[1]->io_vd && args[1]->io_vd->vdev_ops->vdev_op_leaf /
+	args[1]->io_vd && args[1]->io_vd->vdev_ops->vdev_op_leaf &&
+	(string) args[1]->io_spa->spa_name != "rpool"/
 {
 	this->pool = (string) args[1]->io_spa->spa_name;
 	ziots[args[1]] = timestamp;
@@ -149,7 +150,8 @@ fbt::zio_create:return
 fbt::zio_done:entry
 / args[0]->io_type && args[0]->io_type != 5 &&
 	args[0]->io_vd && args[0]->io_vd->vdev_ops->vdev_op_leaf &&
-	ziots[args[0]] /
+	ziots[args[0]] &&
+	(string) args[0]->io_spa->spa_name != "rpool"/
 {
 	this->op = ziotype[args[0]->io_type];
 	this->pool = (string) args[0]->io_spa->spa_name;

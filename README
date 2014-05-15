@@ -6,11 +6,11 @@ details of that environment at
 
     http://utcc.utoronto.ca/~cks/space/blog/solaris/ZFSFileserverSetup
 
-These scripts are for Solaris 10 update 8 plus some patches and may not
-work on any later or earlier version. They work for us but as usual
-there are no warranties. I make no claims that they are general about
-what they report; we wrote them to find out the information that we
-needed at the time.
+These scripts are for OmniOS r151008j or so (as of 2014-05-15) and thus
+more or less current Illumos, and may not work on any later or earlier
+version. They work for us but as usual there are no warranties. I make
+no claims that they are general about what they report; we wrote them
+to find out the information that we needed at the time.
 
 Please note that some of these scripts contain local assumptions and
 things that are very specific to our environment here. You definitely
@@ -50,6 +50,10 @@ working out your 99% performance point or graphing the distribution
 of IO times.
 
 === Potential errors when using the scripts
+
+[NOTE: this information is probably obsolete for OmniOS. It's retained
+for historical notes and because I don't have the time to thoroughly
+revise this README right now.]
 
 Suppose that you get an error like:
 	nfs3-mon.d: line 63: probe description fbt::rfs3_read:entry does not match any probes
@@ -143,4 +147,4 @@ handling of this may not be complete. Also, this has only been tested
 in a setup with mirror vdevs and there may be things I don't know about
 ZIO against raidz vdevs.
 
-(Chris Siebenmann, November 23 2012)
+(Chris Siebenmann, November 23 2012/May 15 2014 for OmniOS revisions)
