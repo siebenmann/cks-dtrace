@@ -53,6 +53,7 @@ BEGIN
 	names["128.100.3.43"] = "apps3";
 	names["128.100.3.37"] = "oldapps";
 	names["128.100.3.83"] = "dcssmb-3";
+	names["128.100.3.117"] = "dcsosmb-3";
 	names["128.100.3.84"] = "smb-3";
 	names["128.100.3.30"] = "colony";
 	names["128.100.1.10"] = "settlement";
