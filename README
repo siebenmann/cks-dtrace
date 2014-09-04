@@ -49,6 +49,10 @@ analysis that needs full information about each event. For example,
 working out your 99% performance point or graphing the distribution
 of IO times.
 
+In addition, fdrwmon.d will report per-FD read/write IO activity for
+a particular process, with a bunch of limitations based on what system
+calls it currently monitors.
+
 === Potential errors when using the scripts
 
 [NOTE: this information is probably obsolete for OmniOS. It's retained
@@ -82,6 +86,16 @@ comments about the ZNODE_TO_POOLNAME() macro and how to change it.
 === Script details
 
 The current DTrace scripts here:
+
+- fdrwmon.d: reports on read/write IO per-second bandwidth for a
+  particular process on a per-file-descriptor basis. See the comments
+  at the start of the script for how to run it and what information
+  it prints. Currently only read(), write(), readv(), and writev()
+  activity is tracked.
+
+  (A thorough script would probably also look at least at the recv*()
+  and send*() families of socket calls. We haven't needed this ourselves
+  so far.)
 
 - nfs3-stats.d: gathers timing information on NFS v3 server performance
   and ZFS performance (both high level and low level). This is mostly
