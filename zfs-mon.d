@@ -30,8 +30,9 @@
  *		data because the ZIL doesn't have anything uncommitted.
  *
  * Pool ZIO: count, pool, how many read & write ops and volume, and how
- *		IOs divide up among foreground, synchronous high-priority,
- *		readaheads, asynchronous writebacks, and other background IOs.
+ *		IOs divide up among foreground reads, synchronous writes,
+ *		readaheads, asynchronous writebacks, 'now' IOs, and
+ *		background scrubs.
  *
  * IO multiplication: ZFS writes and reads versus ZIO writes and *foreground*
  *		ZIO reads. ZFS writes often multiply if you have redundant
@@ -39,6 +40,8 @@
  *		count. ZFS reads multiply on cache misses by the ZFS block
  *		size; you may read 4 KB at the user level, but ZIO always
  *		fetches full blocks (usually 128 KB).
+ *		Note that because of cache hits, ZFS reads can be bigger
+ *		than ZIO reads.
  *
  * ZIL writes: total count, KB used / KB allocated in pool, ZIL commit count.
  *	The ZIL is allocated in blocks but not all of a block may be used
@@ -334,19 +337,29 @@ fbt::zio_done:entry
 	@ziofg[this->pool] = count();
 }
 fbt::zio_done:entry
-/ this->active && args[0]->io_priority == 6 /
+/ this->active && args[0]->io_priority == 1 /
+{
+	@ziosw[this->pool] = count();
+}
+fbt::zio_done:entry
+/ this->active && args[0]->io_priority == 2 /
 {
 	@ziora[this->pool] = count();
 }
 fbt::zio_done:entry
-/ this->active && args[0]->io_priority == 4 /
+/ this->active && args[0]->io_priority == 3 /
 {
 	@ziowb[this->pool] = count();
 }
 fbt::zio_done:entry
-/ this->active && args[0]->io_priority != 0 && args[0]->io_priority != 6 && args[0]->io_priority != 4/
+/ this->active && args[0]->io_priority == 4 /
 {
 	@ziobg[this->pool] = count();
+}
+fbt::zio_done:entry
+/ this->active && args[0]->io_priority == 6 /
+{
+	@zionw[this->pool] = count();
 }
 
 /* Track high-priority, someone-is-waiting reads explicitly. */
@@ -403,8 +416,10 @@ tick-10sec
 
 	printf("Pool ZIO:\n");
 	normalize(@zrsize, 1024*1024);	normalize(@zwsize, 1024*1024);
-	printa("%@6d in %16s  reads: %@4d / %@4d MB  writes: %@5d / %@4d MB | %@5d fg %@4d ra %@5d wb %@3d bg\n",
-		@zio, @zread, @zrsize, @zwrite, @zwsize, @ziofg, @ziora, @ziowb, @ziobg);
+	/* rd: fg reads. wr: sync writes. ra: readahead. wb: async writes. nw: 'ZIO_PRIORITY_NOW' IO, issued sometimes.
+	   'sb': scrub/resilver IOs. */
+	printa("%@6d in %16s  reads: %@4d / %@4d MB  writes: %@5d / %@4d MB | %@5d rd %@5d wr %@4d ra %@5d wb %@3d nw %@3d sb\n",
+		@zio, @zread, @zrsize, @zwrite, @zwsize, @ziofg, @ziosw, @ziora, @ziowb, @zionw, @ziobg);
 	printf("\n");
 
 	normalize(@zfsread, 1024*1024); normalize(@zfswrite, 1024*1024);
@@ -482,6 +497,7 @@ tick-10sec, END
 	trunc(@zio); trunc(@zread); trunc(@zrsize); trunc(@zwrite);
 	trunc(@zwsize);
 	trunc(@ziofg); trunc(@ziora); trunc(@ziowb); trunc(@ziobg);
+	trunc(@ziosw); trunc(@zionw);
 	trunc(@ztread); trunc(@ztwrite);
 
 	trunc(@zfsread); trunc(@zfswrite); trunc(@zfsrc); trunc(@zfswc);
