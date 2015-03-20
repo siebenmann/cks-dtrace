@@ -53,6 +53,7 @@ BEGIN
 	names["128.100.3.218"] = "arsenal";
 	names["128.100.3.35"] = "armoury";
 	names["128.100.3.124"] = "mailswitch";
+	names["128.100.3.180"] = "pwmaster";
 
 	names["128.100.3.150"] = "comps0";
 	names["128.100.3.151"] = "comps1";
