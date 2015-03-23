@@ -8,7 +8,8 @@
  * usage: zfs-mon.d [verbosity [pool-metadata]]
  *
  * verbosity 1 reports basic information about ZFS VFS metadata operations.
- * verbosity 2 adds reports on active ZIOs and pool TXGs.
+ * verbosity 2 adds reports on active ZIOs.
+ * verbosity 3 adds reports on pool TXGs.
  * pool-metadata 1 adds details on per-pool metadata operations; it implies
  * verbosity 1 (but you can use 'zfs-mon.d 0 1' if you want to).
  *
@@ -465,15 +466,18 @@ tick-10sec
 	printa("%@6d  == TOTAL ==       %@5d read / %@3d write\n",
 		@z1active, @z1ractive, @z1wactive);
 	printa("%@6d in %-16s  %@3d read / %@3d write\n", @zactive, @zractive, @zwactive);
-	printf("\n");
+}
 
+tick-10sec
+/verbose >= 3/
+{
+	printf("\n");
 	printf("Pool TXG count:\n");
 	printa("%@6d  %s\n", @txg);
 
 	/* <cks> doesn't expect this to fire on our workload.
 	   It should probably be removed. */
 	printa("\nzfs_putapage() bytes: %@d\n", @zfswput);
-	trunc(@zfswput);
 }
 
 /*
@@ -511,6 +515,8 @@ tick-10sec, END
 	trunc(@z_create); trunc(@z_link); trunc(@z_rename); trunc(@z_remove);
 	trunc(@z_mkdir); trunc(@z_rmdir); trunc(@z_setattr); trunc(@z_symlink);
 	trunc(@z_readdir); trunc(@z_readlink); trunc(@z_lookup);
+
+	trunc(@zfswput);
 }
 
 END
