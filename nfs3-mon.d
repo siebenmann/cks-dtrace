@@ -118,6 +118,7 @@ fbt::rfs3_read:entry, fbt::rfs3_write:entry, fbt::rfs3_commit:entry
 
 	@curops = sum(1);
 	@opsc[self->dir] = sum(1);
+	@opsz[self->dir] = sum(self->count);
 }
 
 /*
@@ -168,6 +169,7 @@ fbt::rfs3_read:return, fbt::rfs3_write:return, fbt::rfs3_commit:return
 {
 	@curops = sum(-1);
 	@opsc[self->dir] = sum(-1);
+	@opsz[self->dir] = sum(-self->count);
 
 	self->in_rfs3 = 0;
 	self->count = 0;
@@ -207,8 +209,10 @@ tick-10sec
 	trunc(@pools, topn);	normalize(@pools, (1024*1024));
 				normalize(@dir, (1024*1024));
 
+	normalize(@opsz, (1024*1024));
 	printa("currently outstanding: %@d NFS request(s)\n   ", @curops);
-	printa(" %@d %s", @opsc); printf("\n\n");
+	printa(" %@d / %@d MB %s", @opsc, @opsz); printf("\n\n");
+	denormalize(@opsz);
 
 	printa(" %@5d MB in %@4d %s\n", @dir, @counts); printf("\n");
 
