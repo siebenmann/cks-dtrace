@@ -301,12 +301,16 @@ fbt::zio_create:return
 {
 	@zractive[this->pool] = sum(1);
 	@z1ractive = sum(1);
+	@z1rsize = sum(args[1]->io_size);
+	@zarsize[this->pool] = sum(args[1]->io_size);
 }
 fbt::zio_create:return
 / this->cactive && args[1]->io_type == 2 /
 {
 	@zwactive[this->pool] = sum(1);
 	@z1wactive = sum(1);
+	@z1wsize = sum(args[1]->io_size);
+	@zawsize[this->pool] = sum(args[1]->io_size);
 }
 fbt::zio_create:return
 / this->cactive /
@@ -378,6 +382,8 @@ fbt::zio_done:entry
 	@zrsize[this->pool] = sum(args[0]->io_size);
 	@zractive[this->pool] = sum(-1);
 	@z1ractive = sum(-1);
+	@z1rsize = sum(-(args[0]->io_size));
+	@zarsize[this->pool] = sum(-(args[0]->io_size));
 	@ztread = sum(args[0]->io_size);
 }
 
@@ -388,6 +394,8 @@ fbt::zio_done:entry
 	@zwsize[this->pool] = sum(args[0]->io_size);
 	@zwactive[this->pool] = sum(-1);
 	@z1wactive = sum(-1);
+	@z1wsize = sum(-(args[0]->io_size));
+	@zawsize[this->pool] = sum(-(args[0]->io_size));
 	@ztwrite = sum(args[0]->io_size);
 }
 
@@ -463,9 +471,11 @@ tick-10sec
 {
 	printf("\n");
 	printf("Active ZIO:\n");
-	printa("%@6d  == TOTAL ==       %@5d read / %@3d write\n",
-		@z1active, @z1ractive, @z1wactive);
-	printa("%@6d in %-16s  %@3d read / %@3d write\n", @zactive, @zractive, @zwactive);
+	normalize(@z1rsize, (1024*1024)); normalize(@z1wsize, (1024*1024));
+	printa("%@6d  == TOTAL ==       %@5d read / %@3d write    %@2d MB read / %@2d MB write\n",
+		@z1active, @z1ractive, @z1wactive, @z1rsize, @z1wsize);
+	normalize(@zarsize, (1024*1024)); normalize(@zawsize, (1024*1024));
+	printa("%@6d in %-16s  %@3d read / %@3d write    %@2d MB read / %@2d MB write\n", @zactive, @zractive, @zwactive, @zarsize, @zawsize);
 }
 
 tick-10sec
@@ -523,4 +533,5 @@ END
 {
 	trunc(@zactive); trunc(@zractive); trunc(@zwactive);
 	trunc(@z1active); trunc(@z1ractive); trunc(@z1wactive);
+	trunc(@z1rsize); trunc(@z1wsize); trunc(@zarsize); trunc(@zawsize);
 }
